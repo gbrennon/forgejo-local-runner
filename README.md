@@ -69,8 +69,8 @@ DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock \
 To have Codeberg dispatch jobs to this machine instead of running them locally, register
 it as a persistent Forgejo Actions runner and start the daemon:
 
-- `just runner-register token=<TOKEN>` — register with a Codeberg runner token.
-- `just runner-daemon` — run the registered runner against the podman socket.
+- `just runner-token` — store the Codeberg runner token securely in an ignored file.
+- `just runner-daemon` — connect the registered runner to Codeberg through podman.
 
 See [docs/registering-on-codeberg.md](docs/registering-on-codeberg.md) for the full
 registration walkthrough, including where to get the token, the `runner-config.yaml`
