@@ -23,34 +23,30 @@ The same `.forgejo/workflows/ci.yml` runs unchanged in both modes.
 - `just` for the recipes below.
 - Actions enabled for the target repository on Codeberg.
 
-## Step 1: Get a registration token from Codeberg
+## Step 1: Create the runner on Codeberg
 
 Open the runner settings for the scope you want the runner to serve:
 
 - Repository runner: `Repo -> Settings -> Actions -> Runners -> Create new runner`.
 - Organization or user runner: the equivalent `Actions -> Runners` page at that level.
 
-Copy the registration token shown. It is single-use and short-lived, so register soon
-after generating it.
+Codeberg displays a runner UUID and a token. The token is shown only once. This
+creates the runner immediately; it does not provide a token for the deprecated
+`forgejo-runner register` command.
 
-## Step 2: Register the runner
+## Step 2: Store the token locally
 
-Run the register recipe with the token from Step 1:
-
-```bash
-just runner-register token=<REGISTRATION_TOKEN>
-```
-
-This calls `forgejo-runner register` against `https://codeberg.org`, names the runner
-after your hostname, and advertises the `codeberg-tiny` label. It writes a `.runner`
-credentials file in the current directory. That file holds a secret and is gitignored;
-keep it next to `runner-config.yaml` so the daemon finds it.
-
-To target a different instance, label, or name, override the justfile variables:
+From the directory that holds the `justfile`, run:
 
 ```bash
-just --set instance https://another.forgejo.host --set runner_labels ci-linux runner-register token=<TOKEN>
+just runner-token
 ```
+
+Paste the Codeberg token at the prompt. The recipe stores it in the gitignored
+`runner-token` file with owner-only permissions.
+
+The runner UUID is configured in `justfile` as `runner_uuid`. Keep the token out of
+source files, shell history, commits, and chat messages.
 
 ## Step 3: Review the daemon config
 
@@ -64,8 +60,7 @@ podman-only host:
   which is required with no `/var/run/docker.sock`. The daemon still reaches podman
   through the `DOCKER_HOST` environment variable the recipe sets.
 
-The label after `runs-on:` in your workflow must match a key in `runner.labels`, and
-that label must be one the runner advertised at registration.
+The label after `runs-on:` in your workflow must match the configured runner label.
 
 ## Step 4: Run the daemon
 
@@ -88,7 +83,7 @@ tab on Codeberg and in the daemon's terminal output.
 ## Keep it running with systemd (optional)
 
 To keep the runner alive across reboots, create a user service. Adjust `WorkingDirectory`
-to the directory that holds `.runner` and `runner-config.yaml`:
+to the directory that holds `runner-token` and `runner-config.yaml`:
 
 ```ini
 # ~/.config/systemd/user/forgejo-runner.service
@@ -99,7 +94,10 @@ After=podman.socket
 [Service]
 Environment=DOCKER_HOST=unix:///run/user/%U/podman/podman.sock
 WorkingDirectory=%h/Documents/repos/gbrennon/forgejo-local-runner
-ExecStart=forgejo-runner daemon --config runner-config.yaml
+ExecStart=forgejo-runner daemon --config runner-config.yaml \
+  --url https://codeberg.org/ \
+  --uuid dc94b1b4-f252-436e-a31f-e340b223ca52 \
+  --token-url file:%h/Documents/repos/gbrennon/forgejo-local-runner/runner-token
 Restart=on-failure
 
 [Install]
