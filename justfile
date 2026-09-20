@@ -2,9 +2,12 @@ podman_sock := "unix:///run/user/" + `id -u` + "/podman/podman.sock"
 image := "ghcr.io/catthehacker/ubuntu:act-latest"
 workflows := ".forgejo/workflows"
 instance := "https://codeberg.org"
-runner_name := `hostname`
-runner_labels := "codeberg-tiny"
+runner_uuid := "dc94b1b4-f252-436e-a31f-e340b223ca52"
+runner_token_file := `pwd` + "/runner-token"
 config := "runner-config.yaml"
+default:
+    @just --list
+
 
 # List the jobs Forgejo would run, discovered from the workflow files
 ci-list:
@@ -18,10 +21,10 @@ ci-local *ARGS:
 ci-job job *ARGS:
     DOCKER_HOST={{podman_sock}} forgejo-runner exec --workflows {{workflows}} --image {{image}} --container-daemon-socket - --job {{job}} {{ARGS}}
 
-# Register this machine as a runner on the remote instance, e.g. `just runner-register token=<TOKEN>`
-runner-register token:
-    forgejo-runner register --no-interactive --instance {{instance}} --token {{token}} --name {{runner_name}} --labels {{runner_labels}}
+# Store the Codeberg runner token in a local ignored file
+runner-token:
+    @read -rsp "Codeberg runner token: " token; echo; printf '%s' "$token" > runner-token; chmod 600 runner-token
 
-# Run the registered runner as a daemon that dispatches remote jobs to podman
+# Run the Codeberg runner daemon against the rootless podman socket
 runner-daemon:
-    DOCKER_HOST={{podman_sock}} forgejo-runner daemon --config {{config}}
+    DOCKER_HOST={{podman_sock}} forgejo-runner daemon --config {{config}} --url {{instance}}/ --uuid {{runner_uuid}} --token-url file://{{runner_token_file}}
