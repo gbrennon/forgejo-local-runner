@@ -1,0 +1,13 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: codeberg-tiny
+    steps:
+      - uses: actions/checkout@v4
+      - name: List repository contents
+        run: ls -la
+      - name: Verify README is present
+        run: test -f README.md
