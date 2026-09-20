@@ -14,23 +14,27 @@ The remote repository must contain `.forgejo/workflows/ci.yml` before any run ha
 - Commit and push the current tree from the `feat-impl-runner` branch.
 - Merge via pull request when ready; do not merge directly into `main`.
 
-## Create a Codeberg runner token
+## Create the Codeberg runner credentials
 
-On Codeberg, open `Repo -> Settings -> Actions -> Runners -> Create new runner` and copy
-the registration token. The token is single-use and short-lived, so generate it
-immediately before registering.
+On Codeberg, open `Repo -> Settings -> Actions -> Runners -> Create new runner`.
+Copy the UUID and token shown by Codeberg. The token is displayed only once.
 
-## Register this machine
+The runner has already been created when this page appears. Do not use the deprecated
+`forgejo-runner register` command for this flow.
 
-From the directory that holds the `justfile`:
+## Store the token locally
+
+From the directory that holds the `justfile`, run:
 
 ```bash
-just runner-register token=<TOKEN>
+just runner-token
 ```
 
-This writes a gitignored `.runner` credentials file and advertises the
-`codeberg-tiny` label. See [registering-on-codeberg.md](registering-on-codeberg.md)
-for what the recipes and config do.
+Paste the Codeberg token at the prompt. The recipe stores it in the gitignored
+`runner-token` file with owner-only permissions.
+
+The runner UUID is configured in `justfile` as `runner_uuid`. Keep the token out of
+source files, shell history, commits, and chat messages.
 
 ## Run the runner daemon
 
@@ -38,9 +42,9 @@ for what the recipes and config do.
 just runner-daemon
 ```
 
-Leave it running. For persistence across reboots, install the `systemd --user` unit
-described in [registering-on-codeberg.md](registering-on-codeberg.md); its
-`WorkingDirectory` must be the directory holding `.runner` and `runner-config.yaml`.
+The recipe connects to Codeberg with the configured UUID and local token file, then
+uses the rootless podman socket to execute matching jobs.
+
 
 ## View workflow status on Codeberg
 
@@ -65,7 +69,7 @@ Add an Actions badge to `README.md` so pass/fail is visible at a glance. Replace
 
 - Repository created and Actions enabled on Codeberg.
 - `.forgejo/workflows/ci.yml` committed and pushed.
-- Registration token obtained from the repository's Actions runner settings.
-- `just runner-register` run; `.runner` file exists locally.
-- `just runner-daemon` running (foreground, `tmux`, or the systemd unit).
+- Runner UUID and token copied from Codeberg's runner setup page.
+- `just runner-token` run; `runner-token` exists with owner-only permissions.
+- `just runner-daemon` running in the foreground, `tmux`, or systemd.
 - A pushed commit or PR produced a green run in the Actions tab.
