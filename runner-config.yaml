@@ -1,0 +1,19 @@
+log:
+  level: info
+
+runner:
+  file: .runner
+  capacity: 1
+  timeout: 3h
+  labels:
+    - "codeberg-tiny:docker://ghcr.io/catthehacker/ubuntu:act-latest"
+    - "codeberg-small:docker://ghcr.io/catthehacker/ubuntu:act-latest"
+    - "codeberg-medium:docker://ghcr.io/catthehacker/ubuntu:act-latest"
+
+cache:
+  enabled: true
+
+container:
+  network: host
+  docker_host: "-"
+  valid_volumes: []
