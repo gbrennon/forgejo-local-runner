@@ -90,11 +90,28 @@ test_register_rejects_empty_response() {
   unset -f curl
 }
 
+test_register_surfaces_api_message() {
+  curl() { printf '{"message":"access token does not exist","url":"x"}'; }
+
+  local stderr
+  stderr="$(fjr_register bad-pat-target \
+    --instance "https://codeberg.org" \
+    --scope user \
+    --name ci-runner \
+    --token runner-token 2>&1 >/dev/null)"
+
+  assert_contains "$stderr" "access token does not exist" "api message surfaced"
+  assert_contains "$stderr" "personal access token" "pat hint surfaced"
+
+  unset -f curl
+}
+
 main() {
   test_register_writes_target
   test_register_requires_scope_owner
   test_register_missing_token_fails
   test_register_rejects_empty_response
+  test_register_surfaces_api_message
   rm -rf "$TEST_FJR_HOME"
 
   if [ "$failures" -eq 0 ]; then
