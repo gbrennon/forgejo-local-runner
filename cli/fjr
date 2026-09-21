@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fjr_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+source "$fjr_dir/lib/common.sh"
+source "$fjr_dir/lib/exec.sh"
+source "$fjr_dir/lib/targets.sh"
+source "$fjr_dir/lib/api.sh"
+source "$fjr_dir/lib/register.sh"
+source "$fjr_dir/lib/list_targets.sh"
+source "$fjr_dir/lib/remove_target.sh"
+source "$fjr_dir/lib/daemon_config.sh"
+source "$fjr_dir/lib/daemon.sh"
+
+declare -A FJR_COMMANDS=(
+  [list]=fjr_list
+  [run]=fjr_run
+  [job]=fjr_job
+  [daemon]=fjr_daemon
+  [register]=fjr_register
+  [list-targets]=fjr_list_targets_cmd
+  [remove-target]=fjr_remove_target_cmd
+)
+
+fjr_main() {
+  if [ "$#" -eq 0 ]; then
+    fjr_usage
+    return
+  fi
+  case "$1" in
+    help | -h | --help)
+      fjr_usage
+      return
+      ;;
+  esac
+
+  local handler="${FJR_COMMANDS[$1]:-}"
+  if [ -z "$handler" ]; then
+    fjr_usage_error "unknown command: $1"
+    return
+  fi
+  shift
+  "$handler" "$@"
+}
+
+fjr_main "$@"
