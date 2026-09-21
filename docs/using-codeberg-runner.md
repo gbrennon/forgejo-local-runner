@@ -1,9 +1,9 @@
 # Using this runner with Codeberg
 
-Practical guide for registering this repository's Forgejo Actions runner with Codeberg,
-running jobs on this machine, and viewing workflow status in the remote repository.
-For detailed configuration and troubleshooting, see
-[registering-on-codeberg.md](registering-on-codeberg.md).
+Practical guide for serving a Codeberg repository with the `fjr` runner, running jobs on
+this machine, and viewing workflow status. Codeberg is a hosted Forgejo instance, so the
+generic flow in [registering-on-forgejo.md](registering-on-forgejo.md) applies unchanged;
+this page covers the Codeberg-specific details.
 
 ## Put the workflow on Codeberg
 
@@ -11,40 +11,40 @@ The remote repository must contain `.forgejo/workflows/ci.yml` before any run ha
 
 - Create the repository on Codeberg, or use an existing one.
 - Enable Actions: `Repo -> Settings -> Units (Advanced) -> Enable Actions`.
-- Commit and push the current tree from the `feat-impl-runner` branch.
+- Commit and push the workflow.
 - Merge via pull request when ready; do not merge directly into `main`.
 
-## Create the Codeberg runner credentials
+## Create a Forgejo access token
 
-On Codeberg, open `Repo -> Settings -> Actions -> Runners -> Create new runner`.
-Copy the UUID and token shown by Codeberg. The token is displayed only once.
+`fjr register` needs a personal access token to create the runner through the API:
 
-The runner has already been created when this page appears. Do not use the deprecated
-`forgejo-runner register` command for this flow.
+- On Codeberg, open `User Settings -> Applications -> Access Tokens`.
+- Create a token with the `write:actions` scope for the scope you target.
+- Copy the token; you only need it during registration.
 
-## Store the token locally
+## Register the runner
 
-From the directory that holds the `justfile`, run:
+From anywhere, register a target for the repository (or a broader scope):
 
 ```bash
-just runner-token
+fjr register codeberg-app \
+  --instance https://codeberg.org \
+  --scope repo --owner myuser --repo myapp \
+  --name my-machine \
+  --token <codeberg-pat-with-write:actions>
 ```
 
-Paste the Codeberg token at the prompt. The recipe stores it in the gitignored
-`runner-token` file with owner-only permissions.
-
-The runner UUID is configured in `justfile` as `runner_uuid`. Keep the token out of
-source files, shell history, commits, and chat messages.
+`fjr` stores the returned `uuid` and `token` in `~/.local/share/fjr/targets/codeberg-app.yaml`
+with owner-only permissions. Keep tokens out of source files, shell history, and commits.
 
 ## Run the runner daemon
 
 ```bash
-just runner-daemon
+fjr daemon
 ```
 
-The recipe connects to Codeberg with the configured UUID and local token file, then
-uses the rootless podman socket to execute matching jobs.
-
+The daemon connects to Codeberg with the stored credentials and uses the rootless podman
+socket to execute matching jobs. It serves every registered target in one process.
 
 ## View workflow status on Codeberg
 
@@ -69,7 +69,7 @@ Add an Actions badge to `README.md` so pass/fail is visible at a glance. Replace
 
 - Repository created and Actions enabled on Codeberg.
 - `.forgejo/workflows/ci.yml` committed and pushed.
-- Runner UUID and token copied from Codeberg's runner setup page.
-- `just runner-token` run; `runner-token` exists with owner-only permissions.
-- `just runner-daemon` running in the foreground, `tmux`, or systemd.
+- Forgejo access token with `write:actions` created.
+- `fjr register` run; `fjr list-targets` shows the target.
+- `fjr daemon` running in the foreground, `tmux`, or systemd.
 - A pushed commit or PR produced a green run in the Actions tab.
