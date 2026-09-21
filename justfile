@@ -1,10 +1,6 @@
 podman_sock := "unix:///run/user/" + `id -u` + "/podman/podman.sock"
 image := "ghcr.io/catthehacker/ubuntu:act-latest"
 workflows := ".forgejo/workflows"
-instance := "https://codeberg.org"
-runner_uuid := "dc94b1b4-f252-436e-a31f-e340b223ca52"
-runner_token_file := `pwd` + "/runner-token"
-config := "runner-config.yaml"
 default:
     @just --list
 
@@ -21,10 +17,26 @@ ci-local *ARGS:
 ci-job job *ARGS:
     DOCKER_HOST={{podman_sock}} forgejo-runner exec --workflows {{workflows}} --image {{image}} --container-daemon-socket - --job {{job}} {{ARGS}}
 
-# Store the Codeberg runner token in a local ignored file
-runner-token:
-    @read -rsp "Codeberg runner token: " token; echo; printf '%s' "$token" > runner-token; chmod 600 runner-token
+# Register a runner on any Forgejo instance via the API, e.g. `just register mine --instance https://codeberg.org --scope repo --owner me --repo app --name ci --token TOKEN`
+register name *ARGS:
+    @bash cli/fjr register {{name}} {{ARGS}}
 
-# Run the Codeberg runner daemon against the rootless podman socket
-runner-daemon:
-    DOCKER_HOST={{podman_sock}} forgejo-runner daemon --config {{config}} --url {{instance}}/ --uuid {{runner_uuid}} --token-url file://{{runner_token_file}}
+# List the registered runner targets
+list-targets:
+    @bash cli/fjr list-targets
+
+# Remove a registered runner target by name
+remove-target name:
+    @bash cli/fjr remove-target {{name}}
+
+# Run one runner daemon for all registered targets
+daemon:
+    @bash cli/fjr daemon
+
+# Run the fjr CLI from the checkout without installing it
+fjr *ARGS:
+    @bash cli/fjr {{ARGS}}
+
+# Install the fjr CLI into the user PATH by delegating to scripts/install.sh
+install:
+    @bash scripts/install.sh

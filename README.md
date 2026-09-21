@@ -19,8 +19,8 @@ edit-run-inspect cycle before pushing.
 
 ## Status
 
-Early development. The runner is not yet implemented; this repository currently
-defines the project's intent and scope.
+Working. The `fjr` CLI runs workflows locally and registers/serves runners for any
+Forgejo instance and scope (user, organization, repository, or admin).
 
 ## Running workflows locally
 
@@ -64,20 +64,59 @@ DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock \
 - `--container-daemon-socket -` disables mounting the host docker socket into the job
   container, which is required on a podman-only host with no `/var/run/docker.sock`.
 
-## Registering as a remote runner
+## Installing the fjr CLI
 
-To have Codeberg dispatch jobs to this machine instead of running them locally, register
-it as a persistent Forgejo Actions runner and start the daemon:
+The `just` recipes are for development inside a checkout. Install the same
+commands once as the `fjr` CLI to use them from any repository:
 
-- `just runner-token` — store the Codeberg runner token securely in an ignored file.
-- `just runner-daemon` — connect the registered runner to Codeberg through podman.
+- `just install` — copy the CLI to `~/.local/share/fjr` and link `fjr` into
+  `~/.local/bin`.
+- `bash scripts/install.sh` — the same install without `just`.
 
-See [docs/registering-on-codeberg.md](docs/registering-on-codeberg.md) for the full
-registration walkthrough, including where to get the token, the `runner-config.yaml`
-settings, and an optional systemd service.
+The install is idempotent; a foreign file already at `~/.local/bin/fjr` is moved
+to `fjr.bak`. Override the targets with `FJR_HOME` and `FJR_BIN_DIR`.
 
-See [docs/using-codeberg-runner.md](docs/using-codeberg-runner.md) for the practical
-usage guide and how Codeberg displays workflow status, including an optional Actions badge.
+From any repository checkout:
+
+- `fjr list` — list the jobs Forgejo would run.
+- `fjr run` — run every workflow; extra `forgejo-runner` flags pass through.
+- `fjr job check` — run a single job by its id.
+- `fjr register NAME [options]` — create a runner on any Forgejo instance via its API.
+- `fjr list-targets` — show every registered runner target.
+- `fjr remove-target NAME` — delete a registered runner target.
+- `fjr daemon` — run one runner process that serves every registered target.
+
+Without installing, run the CLI straight from the checkout with `just fjr <command>`.
+
+## Registering runners for any Forgejo repository
+
+`fjr register` creates a runner on any Forgejo instance through the Forgejo HTTP API and
+stores its `uuid` and `token` in a per-target file under `~/.local/share/fjr/targets/`.
+The scope decides which jobs the runner receives:
+
+- `--scope user` — every repository owned by the token's user.
+- `--scope org --owner ORG` — every repository in an organization.
+- `--scope repo --owner OWNER --repo REPO` — a single repository.
+- `--scope admin` — every repository on the instance (admin token required).
+
+Register one or more targets, then run a single daemon for all of them:
+
+```bash
+fjr register codeberg-app \
+  --instance https://codeberg.org \
+  --scope repo --owner myuser --repo myapp \
+  --name my-machine --token <forgejo-pat-with-write:actions>
+
+fjr daemon
+```
+
+The daemon generates a combined `forgejo-runner` config with one `server.connections`
+entry per target and serves them all in one process. See
+[docs/registering-on-forgejo.md](docs/registering-on-forgejo.md) for the full walkthrough,
+token scopes, and an optional systemd service.
+
+See [docs/using-codeberg-runner.md](docs/using-codeberg-runner.md) for how Forgejo and
+Codeberg display workflow status, including an optional Actions badge.
 
 ## License
 
