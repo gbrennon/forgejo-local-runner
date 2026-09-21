@@ -84,7 +84,7 @@ fjr_perform_registration() {
   uuid="$(fjr_json_field "$response" "uuid")"
   token="$(fjr_json_field "$response" "token")"
   if [ -z "$uuid" ] || [ -z "$token" ]; then
-    echo "fjr: registration response missing uuid or token" >&2
+    fjr_report_registration_failure "$response"
     return 1
   fi
 
@@ -94,6 +94,19 @@ fjr_perform_registration() {
     "$runner_name" "$description" "$uuid" "$token" "$(fjr_default_labels)")"
   fjr_write_target "$name" "$config"
   echo "fjr: registered target '$name' (uuid: $uuid)"
+}
+
+fjr_report_registration_failure() {
+  local response="$1"
+  local api_message
+  api_message="$(fjr_json_field "$response" "message" | sed 's/\\n/; /g')"
+  if [ -n "$api_message" ]; then
+    echo "fjr: Forgejo API rejected the registration: $api_message" >&2
+  else
+    echo "fjr: registration response missing uuid or token" >&2
+  fi
+  echo "fjr: --token must be a Forgejo personal access token with the" >&2
+  echo "     write:actions scope, not the runner token shown in the UI." >&2
 }
 
 fjr_register() {
