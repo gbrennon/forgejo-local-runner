@@ -40,3 +40,35 @@ fjr *ARGS:
 # Install the fjr CLI into the user PATH by delegating to scripts/install.sh
 install:
     @bash scripts/install.sh
+
+# Install fjr and enable its user systemd service
+install-service: install
+    @mkdir -p "{{ env_var("HOME") }}/.config/systemd/user"
+    @printf '%s\n' \
+        '[Unit]' \
+        'Description=Forgejo Actions runner managed by fjr' \
+        'After=network-online.target podman.socket' \
+        'Wants=network-online.target podman.socket' \
+        '' \
+        '[Service]' \
+        'ExecStart=%h/.local/bin/fjr daemon' \
+        'Restart=on-failure' \
+        'RestartSec=10' \
+        'Environment=FJR_HOME=%h/.config/fjr' \
+        'Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin' \
+        '' \
+        '[Install]' \
+        'WantedBy=default.target' \
+        > "{{ env_var("HOME") }}/.config/systemd/user/fjr-runner.service"
+    @systemctl --user daemon-reload
+    @systemctl --user enable fjr-runner.service
+    @systemctl --user restart fjr-runner.service
+
+# Follow logs for the fjr user systemd service
+logs:
+    @journalctl --user -u fjr-runner.service --no-pager -n 50 -f
+
+# Verify the fjr service state and print recent logs
+verify-logs:
+    @systemctl --user --no-pager --full status fjr-runner.service
+    @journalctl --user -u fjr-runner.service --no-pager -n 20
