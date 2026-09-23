@@ -68,6 +68,25 @@ fjr_validate_register() {
   fjr_require_register_args "$1" "$2" "$3" "$6" "$8" || return 1
   fjr_require_register_scope "$3" "$4" "$5" || return 1
 }
+fjr_validate_register_all_repos() {
+  local target="$1"
+  local instance="$2"
+  local runner_name="$3"
+  local token="$4"
+  local specs=(
+    "$target|missing target name"
+    "$instance|--instance required"
+    "$runner_name|--name required"
+    "$token|--token required (Forgejo PAT with write:actions scope)"
+  )
+  local spec
+  for spec in "${specs[@]}"; do
+    if [ -z "${spec%%|*}" ]; then
+      echo "fjr register-all-repos: ${spec#*|}" >&2
+      return 1
+    fi
+  done
+}
 
 fjr_perform_registration() {
   local name="$1" instance="$2" scope="$3" owner="$4" repo="$5"
@@ -127,4 +146,27 @@ fjr_register() {
     "${opts[target]:-}" "${opts[instance]:-}" "${opts[scope]:-}" \
     "${opts[owner]:-}" "${opts[repo]:-}" "${opts[name]:-}" \
     "${opts[description]:-}" "${opts[token]:-}"
+}
+
+fjr_register_all_repos_cmd() {
+  declare -A opts=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --scope | --owner | --repo)
+        echo "fjr register-all-repos: $1 is unsupported;" \
+          "account-wide scope is always user" >&2
+        return 1
+        ;;
+      --*) opts["${1#--}"]="${2:-}"; shift 2 ;;
+      *) opts[target]="$1"; shift ;;
+    esac
+  done
+
+  fjr_validate_register_all_repos \
+    "${opts[target]:-}" "${opts[instance]:-}" "${opts[name]:-}" \
+    "${opts[token]:-}" || return 1
+
+  fjr_perform_registration \
+    "${opts[target]:-}" "${opts[instance]:-}" "user" "" "" \
+    "${opts[name]:-}" "${opts[description]:-}" "${opts[token]:-}"
 }
