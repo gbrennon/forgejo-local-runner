@@ -99,6 +99,11 @@ The scope decides which jobs the runner receives:
 - `--scope repo --owner OWNER --repo REPO` — a single repository.
 - `--scope admin` — every repository on the instance (admin token required).
 
+Use `fjr register-all-repos NAME` when one runner should serve every repository owned by
+the authenticated user without specifying an owner or repository. See the
+[Forgejo registration guide](docs/registering-on-forgejo.md) for the account-wide flow,
+token requirements, and scope details.
+
 Register one or more targets, then run a single daemon for all of them:
 
 ```bash
