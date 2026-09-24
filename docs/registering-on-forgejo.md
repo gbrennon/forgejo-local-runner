@@ -41,6 +41,23 @@ permissions. The PAT is used only for this request and is never stored.
 
 Repeat `fjr register` for every instance, organization, or repository you want to serve.
 
+### Account-wide user registration
+
+To serve every repository owned by the authenticated user with one target, use the
+account-wide command:
+
+```bash
+fjr register-all-repos codeberg-account \
+  --instance https://codeberg.org \
+  --name my-machine \
+  --token <codeberg-pat-with-write:actions>
+```
+
+This calls the `user` runner-registration endpoint and serves every repository owned by
+the PAT's user. The PAT is used only for registration; the returned runner token is stored
+in the target file. Organizations, admin-wide repositories, and individually shared
+repositories require the existing `fjr register` command with the matching scope.
+
 ## Step 2: Review the registered targets
 
 ```bash

@@ -47,6 +47,67 @@ test_register_writes_target() {
 
   unset -f curl
 }
+test_register_all_repos_uses_user_scope() {
+  curl() {
+    local url="${!#}"
+    printf '%s' "$url" > "$TEST_FJR_HOME/curl-url"
+    printf '{"id":42,"uuid":"all-repos-uuid","token":"all-repos-token"}'
+  }
+
+  fjr_register_all_repos_cmd account-wide \
+    --instance "https://codeberg.org" \
+    --name ci-runner \
+    --token fake-pat >/dev/null
+
+  local content
+  content="$(fjr_read_target account-wide)"
+  assert_contains "$content" "scope: user" "account-wide target uses user scope"
+  assert_contains "$content" "owner: " "account-wide target has empty owner"
+  assert_contains "$content" "repo: " "account-wide target has empty repo"
+  assert_contains "$content" "instance: https://codeberg.org" "account-wide instance stored"
+  assert_contains "$content" "runner_name: ci-runner" "account-wide runner name stored"
+  assert_contains "$content" "uuid: all-repos-uuid" "account-wide uuid stored"
+  assert_contains "$content" "token: all-repos-token" "account-wide token stored"
+
+  local endpoint
+  endpoint="$(cat "$TEST_FJR_HOME/curl-url")"
+  assert_contains "$endpoint" "https://codeberg.org/api/v1/user/actions/runners" \
+    "account-wide registration uses user endpoint"
+
+  unset -f curl
+}
+
+test_register_all_repos_requires_required_arguments() {
+  local invocation
+  for invocation in \
+    "fjr_register_all_repos_cmd '' --instance https://codeberg.org --name ci-runner --token fake-pat" \
+    "fjr_register_all_repos_cmd account-wide --name ci-runner --token fake-pat" \
+    "fjr_register_all_repos_cmd account-wide --instance https://codeberg.org --token fake-pat" \
+    "fjr_register_all_repos_cmd account-wide --instance https://codeberg.org --name ci-runner"; do
+    if eval "$invocation" >/dev/null 2>&1; then
+      echo "FAIL: account-wide invocation should reject missing required argument"
+      failures=$((failures + 1))
+    else
+      echo "PASS: account-wide invocation rejects missing required argument"
+    fi
+  done
+}
+
+test_register_all_repos_rejects_repository_options() {
+  local invocation
+  for invocation in \
+    "fjr_register_all_repos_cmd account-wide --instance https://codeberg.org --scope repo --name ci-runner --token fake-pat" \
+    "fjr_register_all_repos_cmd account-wide --instance https://codeberg.org --owner myorg --name ci-runner --token fake-pat" \
+    "fjr_register_all_repos_cmd account-wide --instance https://codeberg.org --repo myrepo --name ci-runner --token fake-pat"; do
+    if eval "$invocation" >/dev/null 2>&1; then
+      echo "FAIL: account-wide invocation should reject repository option"
+      failures=$((failures + 1))
+    else
+      echo "PASS: account-wide invocation rejects repository option"
+    fi
+  done
+}
+
 
 test_register_requires_scope_owner() {
   if fjr_register bad-target \
@@ -112,6 +173,9 @@ main() {
   test_register_missing_token_fails
   test_register_rejects_empty_response
   test_register_surfaces_api_message
+  test_register_all_repos_uses_user_scope
+  test_register_all_repos_requires_required_arguments
+  test_register_all_repos_rejects_repository_options
   rm -rf "$TEST_FJR_HOME"
 
   if [ "$failures" -eq 0 ]; then

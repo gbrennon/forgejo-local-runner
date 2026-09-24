@@ -24,7 +24,19 @@ The remote repository must contain `.forgejo/workflows/ci.yml` before any run ha
 
 ## Register the runner
 
-From anywhere, register a target for the repository (or a broader scope):
+From anywhere, register a target using either the account-wide or repository-scoped flow:
+
+When one account-wide runner is desired, the recommended path is:
+
+```bash
+fjr register-all-repos codeberg-account \
+  --instance https://codeberg.org \
+  --name my-machine \
+  --token <codeberg-pat-with-write:actions>
+```
+
+This serves every repository owned by the authenticated Codeberg user. Use the
+repository-scoped command below when the runner should serve only one repository.
 
 ```bash
 fjr register codeberg-app \

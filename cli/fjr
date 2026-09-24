@@ -19,6 +19,7 @@ declare -A FJR_COMMANDS=(
   [job]=fjr_job
   [daemon]=fjr_daemon
   [register]=fjr_register
+  [register-all-repos]=fjr_register_all_repos_cmd
   [list-targets]=fjr_list_targets_cmd
   [remove-target]=fjr_remove_target_cmd
 )
