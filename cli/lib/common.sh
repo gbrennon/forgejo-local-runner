@@ -40,6 +40,7 @@ Usage:
   fjr run [runner-args]        Run every workflow in the current repository
   fjr job JOB [args...]        Run a single job by id
   fjr register NAME [options]  Register a runner on Forgejo via the API
+  fjr register-all-repos NAME [options]  Register one runner for all user repos
   fjr list-targets             List registered runner targets
   fjr remove-target NAME       Remove a registered runner target
   fjr daemon                   Run one daemon for all registered targets
@@ -47,7 +48,11 @@ Usage:
 Register options:
   --instance URL   --scope user|org|repo|admin
   --owner OWNER    --repo REPO    --name RUNNER_NAME
-  --description D   --token FORGEJO_PAT
+  --description D  --token FORGEJO_PAT
+
+Register-all-repos options:
+  --instance URL   --name RUNNER_NAME   --description D   --token FORGEJO_PAT
+  Uses the authenticated user's account-wide scope for repositories they own.
 
 Environment overrides:
   FJR_HOME  FJR_PODMAN_SOCKET  FJR_WORKFLOWS  FJR_IMAGE  FJR_LABELS

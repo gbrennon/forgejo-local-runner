@@ -19,6 +19,7 @@ test_usage_lists_commands() {
   local output
   output="$("$fjr" 2>&1 || true)"
   assert_contains "$output" "register" "usage mentions register"
+  assert_contains "$output" "register-all-repos" "usage mentions register-all-repos"
   assert_contains "$output" "list-targets" "usage mentions list-targets"
   assert_contains "$output" "remove-target" "usage mentions remove-target"
   assert_contains "$output" "daemon" "usage mentions daemon"
