@@ -23,6 +23,7 @@ test_usage_lists_commands() {
   assert_contains "$output" "list-targets" "usage mentions list-targets"
   assert_contains "$output" "remove-target" "usage mentions remove-target"
   assert_contains "$output" "daemon" "usage mentions daemon"
+  assert_contains "$output" "prune" "usage mentions prune"
 }
 
 test_unknown_command_fails() {

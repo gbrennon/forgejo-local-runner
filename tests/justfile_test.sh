@@ -28,6 +28,8 @@ main() {
   assert_present '^list-targets:' "list-targets recipe present"
   assert_present '^remove-target ' "remove-target recipe present"
   assert_present '^daemon:' "daemon recipe present"
+  assert_present 'fjr-prune.timer' "prune timer installed by install-service"
+  assert_present 'fjr prune' "prune service runs fjr prune"
 
   assert_absent '^runner-token:' "runner-token recipe removed"
   assert_absent '^runner-daemon:' "runner-daemon recipe removed"
