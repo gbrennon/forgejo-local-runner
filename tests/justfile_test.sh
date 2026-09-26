@@ -30,6 +30,7 @@ main() {
   assert_present '^daemon:' "daemon recipe present"
   assert_present 'fjr-prune.timer' "prune timer installed by install-service"
   assert_present 'fjr prune' "prune service runs fjr prune"
+  assert_present 'ExecStartPre=-/usr/bin/systemctl --user restart podman.service' "runner refreshes podman on start"
 
   assert_absent '^runner-token:' "runner-token recipe removed"
   assert_absent '^runner-daemon:' "runner-daemon recipe removed"

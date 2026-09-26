@@ -49,8 +49,14 @@ install-service: install
         'Description=Forgejo Actions runner managed by fjr' \
         'After=network-online.target podman.socket' \
         'Wants=network-online.target podman.socket' \
+        'Requires=podman.socket' \
         '' \
         '[Service]' \
+        '# Restart the podman API service so the runner always talks to a fresh' \
+        '# instance. A long-lived (--time=0) podman service goes stale after a' \
+        '# podman package upgrade and then fails container/volume creation with' \
+        '# "attempt to write a readonly database".' \
+        'ExecStartPre=-/usr/bin/systemctl --user restart podman.service' \
         'ExecStart=%h/.local/bin/fjr daemon' \
         'Restart=on-failure' \
         'RestartSec=10' \
