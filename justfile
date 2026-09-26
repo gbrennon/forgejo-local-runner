@@ -68,7 +68,7 @@ install-service: install
         '' \
         '[Service]' \
         'Type=oneshot' \
-        'ExecStart=%h/.local/bin/fjr prune' \
+        'ExecStart=%h/.local/bin/fjr prune --volumes' \
         'Environment=FJR_HOME=%h/.config/fjr' \
         'Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin' \
         > "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.service"
