@@ -85,6 +85,7 @@ From any repository checkout:
 - `fjr list-targets` — show every registered runner target.
 - `fjr remove-target NAME` — delete a registered runner target.
 - `fjr daemon` — run one runner process that serves every registered target.
+- `fjr prune [--all] [--volumes]` — reclaim podman disk space so rootless storage does not hit its quota. Removes only dangling images by default; `--all` also drops unused images (re-pulled on next run) and `--volumes` unused volumes. `just install-service` schedules this hourly via a `fjr-prune.timer` systemd user unit.
 
 Without installing, run the CLI straight from the checkout with `just fjr <command>`.
 
