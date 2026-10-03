@@ -49,8 +49,14 @@ install-service: install
         'Description=Forgejo Actions runner managed by fjr' \
         'After=network-online.target podman.socket' \
         'Wants=network-online.target podman.socket' \
+        'Requires=podman.socket' \
         '' \
         '[Service]' \
+        '# Restart the podman API service so the runner always talks to a fresh' \
+        '# instance. A long-lived (--time=0) podman service goes stale after a' \
+        '# podman package upgrade and then fails container/volume creation with' \
+        '# "attempt to write a readonly database".' \
+        'ExecStartPre=-/usr/bin/systemctl --user restart podman.service' \
         'ExecStart=%h/.local/bin/fjr daemon' \
         'Restart=on-failure' \
         'RestartSec=10' \
@@ -60,9 +66,35 @@ install-service: install
         '[Install]' \
         'WantedBy=default.target' \
         > "{{ env_var("HOME") }}/.config/systemd/user/fjr-runner.service"
+    @printf '%s\n' \
+        '[Unit]' \
+        'Description=Reclaim podman disk space for fjr runner' \
+        'After=podman.socket' \
+        'Wants=podman.socket' \
+        '' \
+        '[Service]' \
+        'Type=oneshot' \
+        'ExecStart=%h/.local/bin/fjr prune --volumes' \
+        'Environment=FJR_HOME=%h/.config/fjr' \
+        'Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin' \
+        > "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.service"
+    @printf '%s\n' \
+        '[Unit]' \
+        'Description=Periodically reclaim podman disk space for fjr runner' \
+        '' \
+        '[Timer]' \
+        'OnBootSec=15min' \
+        'OnUnitActiveSec=1h' \
+        'Persistent=true' \
+        '' \
+        '[Install]' \
+        'WantedBy=timers.target' \
+        > "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.timer"
     @systemctl --user daemon-reload
     @systemctl --user enable fjr-runner.service
     @systemctl --user restart fjr-runner.service
+    @systemctl --user enable fjr-prune.timer
+    @systemctl --user restart fjr-prune.timer
 
 # Follow logs for the fjr user systemd service
 logs:

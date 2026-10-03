@@ -85,6 +85,11 @@ From any repository checkout:
 - `fjr list-targets` — show every registered runner target.
 - `fjr remove-target NAME` — delete a registered runner target.
 - `fjr daemon` — run one runner process that serves every registered target.
+- `fjr prune [--all] [--volumes]` — reclaim podman disk space so rootless storage does not hit its quota. Removes only dangling images by default; `--all` also drops unused images (re-pulled on next run) and `--volumes` unused volumes. `just install-service` schedules `fjr prune --volumes` hourly via a `fjr-prune.timer` systemd user unit, which also reclaims orphaned per-job `*-env` volumes left behind when a run is interrupted.
+
+### `attempt to write a readonly database`
+
+If jobs fail at `docker create` with `... adding volume ... to database: attempt to write a readonly database`, a stale long-lived podman API service is the cause: a `podman system service --time=0` process that keeps running after a podman package upgrade ends up writing to the migrated (sqlite) state DB and fails. Direct `podman` works, but everything going through the socket (the runner) fails until the service is restarted. The `fjr-runner.service` installed by `just install-service` now runs `ExecStartPre=systemctl --user restart podman.service` so it always talks to a fresh podman. To recover an already-running host immediately: `systemctl --user restart podman.service` (or `podman.socket`).
 
 Without installing, run the CLI straight from the checkout with `just fjr <command>`.
 

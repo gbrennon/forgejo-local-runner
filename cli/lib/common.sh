@@ -11,6 +11,17 @@ fjr_image() {
   printf '%s' "${FJR_IMAGE:-ghcr.io/catthehacker/ubuntu:act-latest}"
 }
 
+fjr_podman_bin() {
+  printf '%s' "${FJR_PODMAN_BIN:-podman}"
+}
+
+fjr_require_podman() {
+  if ! command -v "$(fjr_podman_bin)" >/dev/null; then
+    echo "fjr: podman ('$(fjr_podman_bin)') is not on PATH; install it first" >&2
+    return 1
+  fi
+}
+
 fjr_workflows() {
   printf '%s' "${FJR_WORKFLOWS:-.forgejo/workflows}"
 }
@@ -44,6 +55,7 @@ Usage:
   fjr list-targets             List registered runner targets
   fjr remove-target NAME       Remove a registered runner target
   fjr daemon                   Run one daemon for all registered targets
+  fjr prune [--all] [--volumes]  Reclaim podman disk space (dangling by default)
 
 Register options:
   --instance URL   --scope user|org|repo|admin
