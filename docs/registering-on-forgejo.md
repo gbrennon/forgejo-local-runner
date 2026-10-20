@@ -100,25 +100,29 @@ the runner in the Forgejo UI as well if you want it gone server-side.
 
 ## Keeping it running with systemd (optional)
 
-Create a user service so the runner survives reboots:
-
-```ini
-[Unit]
-Description=Forgejo runner (all fjr targets)
-After=network-online.target podman.socket
-Wants=network-online.target
-
-[Service]
-ExecStart=%h/.local/bin/fjr daemon
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
-```
-
-Enable and start it:
+After registering at least one target, install the user service from the repository:
 
 ```bash
-systemctl --user daemon-reload
-systemctl --user enable --now fjr-runner.service
+just install-service
+```
+
+This installs `fjr` if needed, writes `fjr-runner.service`, and starts it. Check the
+service and follow its logs with:
+
+```bash
+systemctl --user status fjr-runner.service
+just logs
+```
+
+User services normally start when you log in. To start the runner at boot even when you
+do not log in, enable lingering for your user:
+
+```bash
+loginctl enable-linger "$USER"
+```
+
+To stop or disable the service:
+
+```bash
+systemctl --user disable --now fjr-runner.service
 ```
