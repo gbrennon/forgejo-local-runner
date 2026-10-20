@@ -134,16 +134,16 @@ fjr_gc() {
   fjr_gc_podman container prune --force --filter "until=${keep}" >&2 \
     || { echo "fjr gc: container prune failed" >&2; failures=$((failures + 1)); }
 
+  # Image/volume/network prune are best-effort: podman exits non-zero when
+  # individual items are skipped (e.g. an image still referenced by an
+  # external container) even though everything else was reclaimed.
   if [ "$prune_images" -eq 1 ]; then
-    fjr_gc_podman image prune --force --all --filter "until=${keep}" >&2 \
-      || { echo "fjr gc: image prune failed" >&2; failures=$((failures + 1)); }
+    fjr_gc_podman image prune --force --all --filter "until=${keep}" >&2       || echo "fjr gc: image prune partially skipped (some images still in use; ignoring)" >&2
   fi
 
-  fjr_gc_podman volume prune --force --filter "until=${keep}" >&2 \
-    || { echo "fjr gc: volume prune failed" >&2; failures=$((failures + 1)); }
+  fjr_gc_podman volume prune --force --filter "until=${keep}" >&2     || echo "fjr gc: volume prune partially skipped (ignoring)" >&2
 
-  fjr_gc_podman network prune --force --filter "until=${keep}" >&2 \
-    || { echo "fjr gc: network prune failed" >&2; failures=$((failures + 1)); }
+  fjr_gc_podman network prune --force --filter "until=${keep}" >&2     || echo "fjr gc: network prune partially skipped (ignoring)" >&2
 
   # Best effort: older podman releases may not know --build-cache.
   fjr_gc_podman image prune --force --build-cache >&2 \
