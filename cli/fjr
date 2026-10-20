@@ -13,6 +13,7 @@ source "$fjr_dir/lib/remove_target.sh"
 source "$fjr_dir/lib/daemon_config.sh"
 source "$fjr_dir/lib/daemon.sh"
 source "$fjr_dir/lib/prune.sh"
+source "$fjr_dir/lib/gc.sh"
 
 declare -A FJR_COMMANDS=(
   [list]=fjr_list
@@ -20,6 +21,7 @@ declare -A FJR_COMMANDS=(
   [job]=fjr_job
   [daemon]=fjr_daemon
   [prune]=fjr_prune
+  [gc]=fjr_gc
   [register]=fjr_register
   [register-all-repos]=fjr_register_all_repos_cmd
   [list-targets]=fjr_list_targets_cmd

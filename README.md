@@ -85,9 +85,15 @@ From any repository checkout:
 - `fjr list-targets` — show every registered runner target.
 - `fjr remove-target NAME` — delete a registered runner target.
 - `fjr daemon` — run one runner process that serves every registered target.
-- `fjr prune [--all] [--volumes]` — reclaim podman disk space so rootless storage does
-  not hit its quota. `just install-service` schedules `fjr prune --volumes` hourly via a
-  `fjr-prune.timer` systemd user unit.
+- `fjr prune [--all] [--volumes]` — manually reclaim podman disk space so rootless
+  storage does not hit its quota.
+- `fjr gc [options]` — periodic garbage collection: prune stopped containers,
+  unused images/volumes/networks older than `--keep` (default 72h), clear build
+  cache, and remove stale `~/.cache/act` entries. Never touches running
+  containers or what they use. `fjr daemon` also runs `fjr gc` in-process every
+  `FJR_GC_INTERVAL` (default 1h; `0` disables), and `just install-service`
+  schedules `fjr gc` hourly via a `fjr-prune.timer` systemd user unit — either
+  layer alone keeps the quota from filling.
 
 ### `attempt to write a readonly database`
 

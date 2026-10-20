@@ -66,6 +66,7 @@ install-service: install
         '[Install]' \
         'WantedBy=default.target' \
         > "{{ env_var("HOME") }}/.config/systemd/user/fjr-runner.service"
+    @rm -f "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.timer" "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.service"
     @printf '%s\n' \
         '[Unit]' \
         'Description=Reclaim podman disk space for fjr runner' \
@@ -74,7 +75,7 @@ install-service: install
         '' \
         '[Service]' \
         'Type=oneshot' \
-        'ExecStart=%h/.local/bin/fjr prune --volumes' \
+        'ExecStart=%h/.local/bin/fjr gc' \
         'Environment=FJR_HOME=%h/.config/fjr' \
         'Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin' \
         > "{{ env_var("HOME") }}/.config/systemd/user/fjr-prune.service"

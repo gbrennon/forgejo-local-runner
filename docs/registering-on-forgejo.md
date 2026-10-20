@@ -126,3 +126,17 @@ To stop or disable the service:
 ```bash
 systemctl --user disable --now fjr-runner.service
 ```
+
+## Disk cleanup (automatic)
+
+Workflow jobs accumulate stopped containers, unused images/volumes/networks,
+and stale entries in `~/.cache/act`. Two independent layers keep them from
+filling the disk; either one alone is enough:
+
+- `fjr daemon` runs `fjr gc` in-process every `FJR_GC_INTERVAL` (default `1h`;
+  set `0`/`off` to disable). Tune with `FJR_GC_KEEP` (default `72h`),
+  `FJR_GC_ACT_TTL_DAYS` (default `14`), `FJR_ACT_CACHE_DIR`, and
+  `FJR_GC_PRUNE_IMAGES`.
+- `just install-service` installs an hourly `fjr-prune.timer` that runs
+  `fjr gc`. Re-run it after upgrading to replace the old dangling timer with
+  the working one.

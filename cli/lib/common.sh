@@ -56,6 +56,8 @@ Usage:
   fjr remove-target NAME       Remove a registered runner target
   fjr daemon                   Run one daemon for all registered targets
   fjr prune [--all] [--volumes]  Reclaim podman disk space (dangling by default)
+  fjr gc [options]             Periodic garbage collection: prune stale podman
+                             resources and the runner action cache
 
 Register options:
   --instance URL   --scope user|org|repo|admin
@@ -68,6 +70,8 @@ Register-all-repos options:
 
 Environment overrides:
   FJR_HOME  FJR_PODMAN_SOCKET  FJR_WORKFLOWS  FJR_IMAGE  FJR_LABELS
+  FJR_GC_KEEP  FJR_GC_ACT_TTL_DAYS  FJR_ACT_CACHE_DIR  FJR_GC_PRUNE_IMAGES
+  FJR_GC_INTERVAL  FJR_GC_LOG
 USAGE
 }
 
